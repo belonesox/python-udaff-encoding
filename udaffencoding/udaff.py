@@ -55,6 +55,21 @@ def keywords():
         keywords.append(pattern)
     print(' | '.join(keywords))
 
+
+def keywords2md():
+    lines = ["| Английский | Русский |"]
+    lines.append('|:--------|:----------|')
+    keywords = []
+    for good, re_ in decoding_langs.items():
+        pattern = re_.pattern
+        pattern = pattern.replace(u'\s','')
+        pattern = pattern.replace(u' ','')
+        pattern = pattern.replace(u'(','')
+        pattern = pattern.replace(u')','')
+        lines.append("| " + good + " | " + pattern + " |")
+    print('\n'.join(lines))
+    pass
+
 try:
     # UCS-4
     highpoints = re.compile(u'([\U00002600-\U000027BF])|([\U0001f300-\U0001f64F])|([\U0001f680-\U0001f6FF])')
