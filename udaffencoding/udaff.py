@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import codecs
-import emote
+#import emote
+import emojis
+import emojis.db
 import re
 
-decoding_prefix = "emoji_start_"
-decoding_sufix = "_emoji_end"
+ALIAS_TO_EMOJI = emojis.db.get_emoji_aliases()
+EMOJI_TO_ALIAS = dict((v, k) for k, v in ALIAS_TO_EMOJI.items())
+EMOJI_TO_ALIAS_SORTED = sorted(ALIAS_TO_EMOJI.values(), key=len, reverse=True)
+
+RE_TEXT_TO_EMOJI_GROUP = '({0})'.format('|'.join([re.escape(emoji) for emoji in ALIAS_TO_EMOJI]))
+RE_TEXT_TO_EMOJI = re.compile(RE_TEXT_TO_EMOJI_GROUP)
+
+RE_EMOJI_TO_TEXT_GROUP = u'({0})'.format(u'|'.join([re.escape(emoji) for emoji in EMOJI_TO_ALIAS_SORTED]))
+RE_EMOJI_TO_TEXT = re.compile(RE_EMOJI_TO_TEXT_GROUP)
+
+decoding_prefix = "卐"
+decoding_suffix = "ꖦ"
 # TODO: Make regex non greedy
-decoding_pattern_emo = re.compile("%s([\w\-]+)%s" % (decoding_prefix, decoding_sufix))
+decoding_pattern_emo = re.compile("%s([\w\_-]+)%s" % (decoding_prefix, decoding_suffix))
 
 decoding_langs = {
     ' and ': re.compile(u"(\sи\s)"),
@@ -70,12 +82,15 @@ def keywords2md():
     print('\n'.join(lines))
     pass
 
-try:
-    # UCS-4
-    highpoints = re.compile(u'([\U00002600-\U000027BF])|([\U0001f300-\U0001f64F])|([\U0001f680-\U0001f6FF])')
-except re.error:
-    # UCS-2
-    highpoints = re.compile(u'([\u2600-\u27BF])|([\uD83C][\uDF00-\uDFFF])|([\uD83D][\uDC00-\uDE4F])|([\uD83D][\uDE80-\uDEFF])')
+# try:
+#     # UCS-4
+#     highpoints = re.compile(u'([\U00002600-\U000027BF])'
+#                             '|([\U0001f300-\U0001f64F])'
+#                             '|([\U0001f680-\U0001f6FF])')
+# except re.error:
+#     # UCS-2
+#     print('UCS2')
+#     highpoints = re.compile(u'([\u2600-\u27BF])|([\uD83C][\uDF00-\uDFFF])|([\uD83D][\uDC00-\uDE4F])|([\uD83D][\uDE80-\uDEFF])')
 
 
 
@@ -84,18 +99,37 @@ class UdaffCodec(codecs.Codec):
         Udaffs = decoding_pattern_emo.finditer(input)
         for Udaff in Udaffs:
             Udaff_string = Udaff.group(1)
-            input = input.replace(Udaff.group(0), emote.lookup(Udaff_string))
 
+            emo_ = None
+            try:
+                emo_ = emojis.encode(':'+Udaff_string+':')
+                pass
+            except:
+                pass    
+            if emo_:        
+                input = input.replace(Udaff.group(0), 
+                    #emote.lookup(Udaff_string)
+                    emo_
+                )
         return (input.encode('utf8'), len(input))
 
     def decode(self, input, errors='strict'):
         input_string = codecs.decode(input, 'utf8')
-        Udaffs = highpoints.finditer(input_string)
+        # Udaffs = highpoints.finditer(input_string)
 
-        for Udaff in Udaffs:
-            Udaff_string = Udaff.group(0)
-            substitute = "%s%s%s" % (decoding_prefix, emote.decode(Udaff_string), decoding_sufix)
-            input_string = input_string.replace(Udaff_string, substitute)
+        # for Udaff in Udaffs:
+        #     Udaff_string = Udaff.group(0)
+        #     emoalias_ = emojis.decode(Udaff_string).replace(':','')
+        #     substitute = "%s%s%s" % (decoding_prefix, 
+        #                             # emote.decode(Udaff_string), 
+        #                             emoalias_,
+        #                             decoding_suffix)
+        #     input_string = input_string.replace(Udaff_string, substitute)
+        #     pass
+        
+        input_string = RE_EMOJI_TO_TEXT.sub(
+                    lambda match: decoding_prefix + EMOJI_TO_ALIAS[match.group(0)][1:-1] + decoding_suffix, 
+                    input_string)
 
         for good, re_ in decoding_langs.items():
             for term in re_.finditer(input_string):
