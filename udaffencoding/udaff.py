@@ -16,7 +16,7 @@ RE_TEXT_TO_EMOJI = re.compile(RE_TEXT_TO_EMOJI_GROUP)
 RE_EMOJI_TO_TEXT_GROUP = u'({0})'.format(u'|'.join([re.escape(emoji) for emoji in EMOJI_TO_ALIAS_SORTED]))
 RE_EMOJI_TO_TEXT = re.compile(RE_EMOJI_TO_TEXT_GROUP)
 
-decoding_prefix = "卐"
+decoding_prefix = "ᛓ"
 decoding_suffix = "ꖦ"
 # TODO: Make regex non greedy
 decoding_pattern_emo = re.compile("%s([\w\_-]+)%s" % (decoding_prefix, decoding_suffix))
@@ -137,6 +137,7 @@ class UdaffCodec(codecs.Codec):
                 input_string = input_string.replace(match, good)    
 
         #print(input_string)
+        # return input_string
         return (input_string, len(input))
 
 class UdaffIncrementalEncoder(codecs.IncrementalEncoder):
@@ -145,7 +146,7 @@ class UdaffIncrementalEncoder(codecs.IncrementalEncoder):
 
 class UdaffIncrementalDecoder(codecs.IncrementalDecoder):
     def decode(self, input, final=False):
-        return UdaffCodec().decode(input)
+        return UdaffCodec().decode(input)[0]
 
 class UdaffStreamReader(UdaffCodec, codecs.StreamReader):
     pass
